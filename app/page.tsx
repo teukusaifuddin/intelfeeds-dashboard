@@ -301,7 +301,7 @@ export default function Dashboard() {
     return a && (a.label === 'BREAKING' || a.label === 'URGENT' || a.label === 'ALERT')
   }).slice(0, 8)
 
-  // Banner scroll state — ganti tiap 5 detik
+
   useEffect(() => {
     if (breakingFeeds.length === 0) return
     const iv = setInterval(() => {
