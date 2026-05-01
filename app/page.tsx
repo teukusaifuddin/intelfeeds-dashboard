@@ -245,26 +245,96 @@ export default function Dashboard() {
     return feeds.filter(f => f.category === item.id).length
   }
 
-  const breakingFeeds = feeds.filter(f => {
+  // ── HOT TOPIC DETECTION ──────────────────────────────────────────
+  // 1 jam terakhir
+  const oneHourAgo = Date.now() - 60 * 60 * 1000
+  const recentFeeds = feeds.filter(f => {
+    const t2 = f.published_at || f.created_at
+    return t2 && new Date(t2).getTime() > oneHourAgo
+  })
+
+  // Extract keywords penting dari judul (3+ karakter, bukan stopword)
+  const STOPWORDS = new Set(['the','and','for','are','was','has','have','with','from','that','this','its','not','but','than','they','been','will','into','over','more','also','when','after','who','what','where','about','says','said','amid','new'])
+  function extractKeywords(title: string): string[] {
+    return title.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .split(/\s+/)
+      .filter(w => w.length > 3 && !STOPWORDS.has(w))
+  }
+
+  // Group artikel by keyword — cari topik yang muncul di 3+ source berbeda
+  const keywordMap: Record<string, { feeds: Feed[], sources: Set<string> }> = {}
+  for (const f of recentFeeds) {
+    const kws = extractKeywords(f.title)
+    for (const kw of kws) {
+      if (!keywordMap[kw]) keywordMap[kw] = { feeds: [], sources: new Set() }
+      keywordMap[kw].feeds.push(f)
+      keywordMap[kw].sources.add(f.source)
+    }
+  }
+
+  // Hot topics = keyword yang muncul di 3+ source berbeda
+  const hotTopics = Object.entries(keywordMap)
+    .filter(([, v]) => v.sources.size >= 3)
+    .sort((a, b) => b[1].sources.size - a[1].sources.size)
+
+  // Ambil artikel terbaik per hot topic (yang paling baru)
+  const hotFeeds: Feed[] = []
+  const seenIds = new Set<string>()
+  for (const [, v] of hotTopics) {
+    const best = v.feeds.sort((a, b) => {
+      const ta = new Date(a.published_at || a.created_at || 0).getTime()
+      const tb = new Date(b.published_at || b.created_at || 0).getTime()
+      return tb - ta
+    })[0]
+    if (best && !seenIds.has(best.id)) {
+      hotFeeds.push(best)
+      seenIds.add(best.id)
+    }
+    if (hotFeeds.length >= 8) break
+  }
+
+  // Fallback: kalau tidak ada hot topic, pakai artikel terbaru 1 jam dengan alert keyword
+  const breakingFeeds = hotFeeds.length > 0 ? hotFeeds : recentFeeds.filter(f => {
     const a = getAlert(f.title)
-    return a && (a.label === 'BREAKING' || a.label === 'URGENT')
-  }).slice(0, 2)
+    return a && (a.label === 'BREAKING' || a.label === 'URGENT' || a.label === 'ALERT')
+  }).slice(0, 8)
+
+  // Banner scroll state — ganti tiap 5 detik
+  const [bannerIdx, setBannerIdx] = useState(0)
+  useEffect(() => {
+    if (breakingFeeds.length === 0) return
+    const iv = setInterval(() => {
+      setBannerIdx(i => (i + 1) % breakingFeeds.length)
+    }, 5000)
+    return () => clearInterval(iv)
+  }, [breakingFeeds.length])
+
+  const bannerFeed = breakingFeeds[bannerIdx]
+  // ─────────────────────────────────────────────────────────────────
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: t.bg, fontFamily: "'IBM Plex Mono', monospace", overflow: 'hidden', transition: 'background 0.3s, color 0.3s' }}>
 
-      {/* BREAKING BANNER */}
-      {breakingFeeds.length > 0 && (
-        <div style={{ background: '#ef4444', padding: '5px 20px', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-          <span style={{ fontSize: '8px', fontWeight: 900, letterSpacing: '0.2em', color: '#fff', background: 'rgba(0,0,0,0.25)', padding: '2px 8px', borderRadius: '3px', flexShrink: 0 }}>
-            ⚡ BREAKING
+      {/* BREAKING BANNER — Hot Topic Auto-Scroll */}
+      {bannerFeed && (
+        <div style={{ background: hotFeeds.length > 0 ? '#b91c1c' : '#ef4444', padding: '5px 20px', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0, transition: 'all 0.3s' }}>
+          <span style={{ fontSize: '8px', fontWeight: 900, letterSpacing: '0.2em', color: '#fff', background: 'rgba(0,0,0,0.25)', padding: '2px 8px', borderRadius: '3px', flexShrink: 0, whiteSpace: 'nowrap' }}>
+            {hotFeeds.length > 0 ? '🔥 HOT' : '⚡ BREAKING'}
           </span>
-          <div style={{ display: 'flex', gap: '24px', overflow: 'hidden' }}>
-            {breakingFeeds.map(f => (
-              <a key={f.id} href={f.url} target="_blank" rel="noopener noreferrer"
-                style={{ fontSize: '11px', color: '#fff', fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
-                {f.title.length > 90 ? f.title.slice(0, 90) + '…' : f.title}
-              </a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden', flex: 1 }}>
+            <a href={bannerFeed.url} target="_blank" rel="noopener noreferrer"
+              style={{ fontSize: '11px', color: '#fff', fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
+              {bannerFeed.title.length > 120 ? bannerFeed.title.slice(0, 120) + '…' : bannerFeed.title}
+            </a>
+            <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.6)', flexShrink: 0 }}>
+              {bannerIdx + 1}/{breakingFeeds.length}
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+            {breakingFeeds.slice(0, 8).map((_, i) => (
+              <div key={i} onClick={() => setBannerIdx(i)}
+                style={{ width: i === bannerIdx ? '16px' : '5px', height: '5px', borderRadius: '3px', background: i === bannerIdx ? '#fff' : 'rgba(255,255,255,0.35)', cursor: 'pointer', transition: 'all 0.3s' }} />
             ))}
           </div>
         </div>
