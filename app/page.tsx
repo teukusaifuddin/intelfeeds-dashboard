@@ -209,10 +209,13 @@ export default function Dashboard() {
   const [bannerIdx, setBannerIdx] = useState(0)
 
   const fetchFeeds = useCallback(async () => {
-    try {
-      const { data, error } = await supabase.from('feeds').select('*')
-        .order('priority_score', { ascending: false, nullsFirst: false })
-        .order('published_at', { ascending: false, nullsFirst: false })
+    // GANTI INI:
+.order('published_at', { ascending: false, nullsFirst: false })
+
+// MENJADI INI:
+.order('priority_score', { ascending: false, nullsFirst: false })
+.order('published_at', { ascending: false, nullsFirst: false })
+.order('created_at', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(600)
       if (error) throw error
