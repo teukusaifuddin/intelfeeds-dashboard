@@ -34,6 +34,7 @@ const COLS = [
   { key: 'air',          label: 'Air Power',        icon: '✈', color: '#8b5cf6', grad: 'linear-gradient(135deg,#0a070f,#140e20,#1e1232)' },
   { key: 'land',         label: 'Land Forces',      icon: '⚔', color: '#22c55e', grad: 'linear-gradient(135deg,#070e09,#0a1a0e,#0d2614)' },
   { key: 'geopolitical', label: 'Geo-Political',    icon: '🌐', color: '#f97316', grad: 'linear-gradient(135deg,#0f0a06,#1a1008,#26160a)' },
+  { key: 'cyber',        label: 'Cyber Warfare',    icon: '🔐', color: '#6366f1', grad: 'linear-gradient(135deg, #0f0720, #1e1040, #4c1d95)' },
 ]
 
 const ALERTS: [string, string, string][] = [
