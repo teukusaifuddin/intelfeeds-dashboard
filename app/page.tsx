@@ -205,6 +205,7 @@ export default function Dashboard() {
   const [activeNav, setActiveNav] = useState('all')
   const [theme, setTheme] = useState<Theme>('dark')
   const [search, setSearch] = useState('')
+  const [bannerIdx, setBannerIdx] = useState(0)
 
   const fetchFeeds = useCallback(async () => {
     try {
@@ -301,7 +302,6 @@ export default function Dashboard() {
   }).slice(0, 8)
 
   // Banner scroll state — ganti tiap 5 detik
-  const [bannerIdx, setBannerIdx] = useState(0)
   useEffect(() => {
     if (breakingFeeds.length === 0) return
     const iv = setInterval(() => {
