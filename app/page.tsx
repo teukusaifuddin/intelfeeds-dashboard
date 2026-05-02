@@ -213,8 +213,8 @@ export default function Dashboard() {
       const { data, error } = await supabase
         .from('feeds')
         .select('*')
-        .order('priority_score', { ascending: false, nullsFirst: false })
         .order('published_at', { ascending: false, nullsFirst: false })
+        .order('priority_score', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
         .limit(600)
       if (error) throw error
