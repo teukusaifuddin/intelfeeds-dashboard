@@ -216,7 +216,7 @@ export default function Dashboard() {
         .order('published_at', { ascending: false, nullsFirst: false })
         .order('priority_score', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
-        .limit(600)
+        .limit(1000)
       if (error) throw error
       if (data) { setFeeds(data as Feed[]); setLastUpdate(new Date()) }
     } catch (e) { console.error(e) }
