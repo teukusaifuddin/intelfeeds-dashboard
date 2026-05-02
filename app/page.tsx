@@ -252,7 +252,7 @@ export default function Dashboard() {
 
   // ── HOT TOPIC DETECTION ──────────────────────────────────────────
   // 1 jam terakhir
-  const oneHourAgo = Date.now() - 60 * 60 * 1000
+  const oneHourAgo = Date.now() - 6 * 60 * 60 * 1000
   const recentFeeds = feeds.filter(f => {
     const t2 = f.published_at || f.created_at
     return t2 && new Date(t2).getTime() > oneHourAgo
@@ -280,7 +280,7 @@ export default function Dashboard() {
 
   // Hot topics = keyword yang muncul di 3+ source berbeda
   const hotTopics = Object.entries(keywordMap)
-    .filter(([, v]) => v.sources.size >= 3)
+    .filter(([, v]) => v.sources.size >= 2)
     .sort((a, b) => b[1].sources.size - a[1].sources.size)
 
   // Ambil artikel terbaik per hot topic (yang paling baru)
