@@ -252,7 +252,7 @@ export default function Dashboard() {
 
   // ── HOT TOPIC DETECTION ──────────────────────────────────────────
   // 1 jam terakhir
-  const oneHourAgo = Date.now() - 6 * 60 * 60 * 1000
+  const oneHourAgo = Date.now() - 24 * 60 * 60 * 1000
   const recentFeeds = feeds.filter(f => {
     const t2 = f.published_at || f.created_at
     return t2 && new Date(t2).getTime() > oneHourAgo
@@ -299,11 +299,12 @@ export default function Dashboard() {
     if (hotFeeds.length >= 8) break
   }
 
-  // Fallback: kalau tidak ada hot topic, pakai artikel terbaru 1 jam dengan alert keyword
-  const breakingFeeds = hotFeeds.length > 0 ? hotFeeds : recentFeeds.filter(f => {
-    const a = getAlert(f.title)
-    return a && (a.label === 'BREAKING' || a.label === 'URGENT' || a.label === 'ALERT')
-  }).slice(0, 8)
+  // Fallback: kalau tidak ada hot topic, pakai artikel terbaru dengan priority tinggi
+  const fallbackFeeds = feeds
+    .filter(f => (f.priority_score || 0) > 0)
+    .slice(0, 8)
+  const breakingFeeds = hotFeeds.length > 0 ? hotFeeds : 
+    fallbackFeeds.length > 0 ? fallbackFeeds : feeds.slice(0, 8)
 
 
   useEffect(() => {
