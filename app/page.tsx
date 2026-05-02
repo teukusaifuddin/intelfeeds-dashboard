@@ -280,7 +280,7 @@ export default function Dashboard() {
 
   // Hot topics = keyword yang muncul di 3+ source berbeda
   const hotTopics = Object.entries(keywordMap)
-    .filter(([, v]) => v.sources.size >= 2)
+    .filter(([, v]) => v.sources.size >= 3)
     .sort((a, b) => b[1].sources.size - a[1].sources.size)
 
   // Ambil artikel terbaik per hot topic (yang paling baru)
